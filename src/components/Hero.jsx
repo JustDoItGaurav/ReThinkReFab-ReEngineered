@@ -1,5 +1,6 @@
 // src/components/Hero.jsx
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom'; // 1. Import Link from react-router-dom
 
 const Hero = () => {
   return (
@@ -33,12 +34,14 @@ const Hero = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="flex flex-col sm:flex-row justify-center items-center gap-4"
         >
-          <a href="#projects" className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
+          {/* 2. Updated "Start Creating" button to link to the create page */}
+          <Link to="/create-project" className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg">
             Start Creating
-          </a>
-          <a href="#" className="border-2 border-slate-300 hover:bg-white/20 text-slate-200 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
+          </Link>
+          {/* 3. Updated "Browse Ideas" button to link to the projects page */}
+          <Link to="/projects" className="border-2 border-slate-300 hover:bg-white/20 text-slate-200 font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
             Browse Ideas
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>

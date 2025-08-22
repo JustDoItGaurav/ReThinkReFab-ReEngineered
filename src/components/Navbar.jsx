@@ -25,7 +25,7 @@ const Navbar = () => {
     { name: 'Home', path: '/', isScroll: true, to: 'home' },
     { name: 'Projects', path: '/projects', isScroll: false },
     { name: 'Benefits', path: '/', isScroll: true, to: 'benefits' },
-    { name: 'Gallery', path: '/', isScroll: true, to: 'gallery' },
+    { name: 'Gallery', path: '/gallery', isScroll: false },
   ];
 
   // A helper component to decide whether to use a scroll link or a router link
@@ -74,10 +74,9 @@ const Navbar = () => {
             ))}
           </ul>
 
-          {/* Separator */}
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
 
-          {/* Auth-aware Action Buttons */}
+          {/* --- UPDATED Auth-aware Action Buttons --- */}
           <div className="flex items-center space-x-4">
             {currentUser ? (
               <>
@@ -87,7 +86,10 @@ const Navbar = () => {
                 <button onClick={handleLogout} title="Logout" className="text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 transition-colors">
                   <FaSignOutAlt size={20} />
                 </button>
-                <FaUserCircle size={28} className="text-slate-400" title={currentUser.email} />
+                {/* Add a link to the user's own profile */}
+                <RouterLink to={`/profile/${currentUser.uid}`} title="My Profile">
+                  <FaUserCircle size={28} className="text-slate-400 hover:text-green-500 transition-colors" />
+                </RouterLink>
               </>
             ) : (
               <>
@@ -132,6 +134,11 @@ const Navbar = () => {
                   <li className="w-full px-8 mb-4">
                     <RouterLink to="/create-project" onClick={() => setIsOpen(false)} className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-full transition-colors">
                       <FaPlus /> Add Project
+                    </RouterLink>
+                  </li>
+                  <li className="w-full px-8 mb-4">
+                    <RouterLink to={`/profile/${currentUser.uid}`} onClick={() => setIsOpen(false)} className="w-full flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-800 font-bold py-3 px-4 rounded-full transition-colors">
+                      <FaUserCircle /> My Profile
                     </RouterLink>
                   </li>
                   <li className="w-full px-8">

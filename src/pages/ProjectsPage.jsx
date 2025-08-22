@@ -1,20 +1,35 @@
 // src/pages/ProjectsPage.jsx
 import { useState, useEffect, useMemo } from 'react';
 import { db } from '../firebase/config';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { motion } from 'framer-motion';
-import { FiSearch, FiTrendingUp, FiClock } from 'react-icons/fi';
+import { collection, query, orderBy, onSnapshot, getDocs } from 'firebase/firestore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FiSearch, FiTrendingUp, FiClock, FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import ProjectCard from '../components/ProjectCard';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const ProjectsPage = () => {
   const [projects, setProjects] = useState([]);
+  const [allCategories, setAllCategories] = useState(['All']); // State for a stable category list
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('newest');
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
+  // --- NEW: Fetch all categories once on initial load ---
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const projectsCollection = collection(db, 'projects');
+      const projectSnapshot = await getDocs(projectsCollection);
+      const projectList = projectSnapshot.docs.map(doc => doc.data());
+      const uniqueCategories = ['All', ...new Set(projectList.map(p => p.category).filter(Boolean))];
+      setAllCategories(uniqueCategories);
+    };
+    fetchCategories();
+  }, []);
+
+  // Effect for real-time project fetching and sorting
   useEffect(() => {
     setLoading(true);
     
@@ -39,32 +54,21 @@ const ProjectsPage = () => {
 
   }, [sortBy]);
 
-  const filteredProjects = useMemo(() => {
-    let result = projects;
-
-    if (activeCategory !== 'All') {
-      result = result.filter(project => project.category === activeCategory);
-    }
-
-    if (searchTerm.trim() !== '') {
-      const lowercasedSearchTerm = searchTerm.toLowerCase();
-      result = result.filter(project => {
-        const titleMatch = project.title.toLowerCase().includes(lowercasedSearchTerm);
-        const materialsMatch = project.materials && Array.isArray(project.materials) &&
-          project.materials.some(material => 
-            material.toLowerCase().includes(lowercasedSearchTerm)
-          );
-        return titleMatch || materialsMatch;
-      });
-    }
-
-    return result;
-  }, [searchTerm, activeCategory, projects]);
-
-  const categories = useMemo(() => {
-    const allCategories = projects.map(p => p.category).filter(Boolean);
-    return ['All', ...new Set(allCategories)];
-  }, [projects]);
+  // Filtering logic remains the same
+  let filteredProjects = projects;
+  if (activeCategory !== 'All') {
+    filteredProjects = filteredProjects.filter(project => project.category === activeCategory);
+  }
+  if (searchTerm.trim() !== '') {
+    const lowercasedSearchTerm = searchTerm.toLowerCase();
+    filteredProjects = filteredProjects.filter(project => {
+      const titleMatch = project.title.toLowerCase().includes(lowercasedSearchTerm);
+      const materialsMatch = project.materials?.some(m => m.toLowerCase().includes(lowercasedSearchTerm));
+      return titleMatch || materialsMatch;
+    });
+  }
+  
+  const visibleCategories = showAllCategories ? allCategories : allCategories.slice(0, 7);
 
   return (
     <>
@@ -82,17 +86,7 @@ const ProjectsPage = () => {
             <p className="text-lg text-slate-600 dark:text-slate-400 mt-4">Search by title or materials to find your next creation.</p>
           </motion.div>
 
-          <div className="mb-8 flex justify-center items-center gap-4">
-            <span className="text-sm font-semibold text-slate-500">Sort by:</span>
-            <button onClick={() => setSortBy('popular')} className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${sortBy === 'popular' ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}`}>
-              <FiTrendingUp /> Popular
-            </button>
-            <button onClick={() => setSortBy('newest')} className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${sortBy === 'newest' ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}`}>
-              <FiClock /> Newest
-            </button>
-          </div>
-
-          <div className="mb-12 flex flex-col md:flex-row gap-4 justify-center items-center">
+          <div className="mb-12 flex flex-col gap-8 items-center">
             <div className="relative w-full md:w-1/2 lg:w-1/3">
               <input
                 type="text"
@@ -103,21 +97,46 @@ const ProjectsPage = () => {
               />
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             </div>
-          </div>
-          <div className="flex justify-center flex-wrap gap-2 mb-12">
-            {categories.map(category => (
-              <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
-                  activeCategory === category
-                    ? 'bg-green-500 text-white shadow-md'
-                    : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+
+            <div className="w-full max-w-4xl mx-auto">
+              <div className="flex justify-center items-center gap-4 mb-4">
+                <span className="text-sm font-semibold text-slate-500">Sort by:</span>
+                <button onClick={() => setSortBy('popular')} className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${sortBy === 'popular' ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}`}>
+                  <FiTrendingUp /> Popular
+                </button>
+                <button onClick={() => setSortBy('newest')} className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-colors ${sortBy === 'newest' ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}`}>
+                  <FiClock /> Newest
+                </button>
+              </div>
+              
+              <div className="flex justify-center flex-wrap gap-2">
+                <AnimatePresence>
+                  {visibleCategories.map(category => (
+                    <motion.div key={category} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}>
+                      <button
+                        onClick={() => setActiveCategory(category)}
+                        className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
+                          activeCategory === category
+                            ? 'bg-green-500 text-white shadow-md'
+                            : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'
+                        }`}
+                      >
+                        {category}
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {allCategories.length > 7 && (
+                <div className="text-center mt-4">
+                  <button onClick={() => setShowAllCategories(!showAllCategories)} className="flex items-center gap-2 mx-auto text-sm font-semibold text-green-500 hover:text-green-600">
+                    {showAllCategories ? 'Show Less' : 'Show More'}
+                    {showAllCategories ? <FiChevronUp /> : <FiChevronDown />}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           
           {loading ? (
