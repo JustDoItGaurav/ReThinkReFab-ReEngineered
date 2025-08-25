@@ -1,6 +1,6 @@
 // src/pages/ProjectDetailPage.jsx
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { motion } from 'framer-motion';
@@ -48,6 +48,7 @@ const ProjectDetailPage = () => {
     fetchProjectData();
   }, [projectId]);
 
+  // Loading and Error states
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-slate-900">
@@ -87,95 +88,98 @@ const ProjectDetailPage = () => {
     <div className="min-h-screen bg-white dark:bg-slate-900">
       <Navbar />
       <main className="pt-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-12"
+            className="space-y-16"
           >
-            <section className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-              <div className="order-2 lg:order-1">
-                <div className="relative overflow-hidden rounded-xl shadow-2xl bg-slate-100 dark:bg-slate-800 aspect-video">
-                  <img 
-                    src={project.imageUrl} 
-                    alt={project.title}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-
-              <div className="order-1 lg:order-2 space-y-6">
-                <div className="flex items-center gap-2">
-                  <FiTag className="text-green-500 w-5 h-5" />
-                  <span className="inline-block px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-sm font-semibold">
-                    {project.category}
-                  </span>
-                </div>
-
-                <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-2">
-                    {project.title}
-                  </h1>
-                  {project.authorEmail && (
-                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                      <FiUser />
-                      <Link to={`/profile/${project.authorId}`} className="hover:underline hover:text-green-500">
-                        <span>By {project.authorEmail.split('@')[0]}</span>
-                      </Link>
+            {/* --- NEW LAYOUT: ARTICLE STYLE --- */}
+            <section className="space-y-8">
+                {/* Left-aligned Title Block */}
+                <div className="max-w-4xl">
+                    <h1 className="text-4xl sm:text-5xl font-bold text-slate-900 dark:text-white leading-tight mb-4">
+                      {project.title}
+                    </h1>
+                    <div className="flex items-center gap-6 text-slate-500 dark:text-slate-400">
+                        {project.authorEmail && (
+                            <div className="flex items-center gap-2">
+                              <FiUser />
+                              <span>By {project.authorEmail.split('@')[0]}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <FiTag />
+                          <span>{project.category}</span>
+                        </div>
                     </div>
-                  )}
                 </div>
 
-                <p className="text-lg text-slate-600 dark:text-slate-300 leading-relaxed pt-2">
-                  {project.description}
-                </p>
-
-                {project.materials && project.materials.length > 0 && (
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                      <FiTool className="text-green-500 w-5 h-5" />
-                      Materials Needed
-                    </h2>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {project.materials.map((material, index) => (
-                        <li key={index} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                          <span className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></span>
-                          <span>{material}</span>
-                        </li>
-                      ))}
-                    </ul>
+                {/* Medium-sized Image Container */}
+                <div className="max-w-4xl">
+                  <div className="relative overflow-hidden rounded-xl shadow-2xl bg-slate-100 dark:bg-slate-800 aspect-video">
+                    <img 
+                      src={project.imageUrl} 
+                      alt={project.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                   </div>
-                )}
-              </div>
+                </div>
+
+                <div className="max-w-4xl prose prose-lg dark:prose-invert">
+                    <p>
+                      {project.description}
+                    </p>
+                </div>
             </section>
 
-            {project.steps && project.steps.length > 0 && (
-              <section className="max-w-4xl mx-auto">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2 flex items-center justify-center gap-3">
-                    <FiList className="text-green-500" />
-                    Step-by-Step Instructions
+            {/* --- NEW LAYOUT: SIDE-BY-SIDE MATERIALS & INSTRUCTIONS --- */}
+            <section className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+              {/* Materials Section */}
+              {project.materials && project.materials.length > 0 && (
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-8 border border-slate-200 dark:border-slate-700">
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                    <FiTool className="text-green-500" />
+                    Materials
                   </h2>
-                  <p className="text-slate-600 dark:text-slate-400">Follow these steps to complete your project</p>
+                  <ul className="space-y-3">
+                    {project.materials.map((material, index) => (
+                      <li key={index} className="flex items-start gap-3 text-lg text-slate-600 dark:text-slate-300">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mt-2.5 flex-shrink-0"></span>
+                        <span>{material}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="space-y-6">
-                  {project.steps.map((step, index) => (
-                    <motion.div key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: index * 0.1 }} className="flex gap-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                          {index + 1}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-slate-700 dark:text-slate-200 leading-relaxed">{step}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </section>
-            )}
+              )}
 
+              {/* Instructions Section */}
+              {project.steps && project.steps.length > 0 && (
+                <div>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                    <FiList className="text-green-500" />
+                    Instructions
+                  </h2>
+                  <div className="space-y-8">
+                    {project.steps.map((step, index) => (
+                      <motion.div key={index} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: index * 0.1 }} className="flex gap-4">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                            {index + 1}
+                          </div>
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <p className="text-lg text-slate-700 dark:text-slate-200 leading-relaxed">{step}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Similar Projects Section (remains the same) */}
             {similarProjects.length > 0 && (
               <section className="pt-12 border-t border-slate-200 dark:border-slate-700">
                 <div className="text-center mb-12">
